@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
+import os
 import io
 import telebot
 from telebot import apihelper
 from telebot.types import Message
 
-TOKEN = '' #your token from BotFather
+TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '') #your token from BotFather
+
+if not TOKEN:
+    raise ValueError('Error: TELEGRAM_BOT_TOKEN environment variable is not set!')
+
 bot = telebot.TeleBot(TOKEN)
 
 #you can use cloudflare proxy if telegram is banned in your country
-PROXY_URL = ''
-PROXY_FILE_URL = ''
+PROXY_URL = os.environ.get('TELEGRAM_PROXY_URL', '')
+PROXY_FILE_URL = os.environ.get('TELEGRAM_PROXY_FILE_URL', '')
 
 if PROXY_URL: apihelper.API_URL = PROXY_URL
 if PROXY_FILE_URL: apihelper.FILE_URL = PROXY_FILE_URL

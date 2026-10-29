@@ -1,0 +1,45 @@
+---
+- name: Deploy Saturn Cryptor Bot
+  hosts: vds_server
+  gather_facts: no
+
+  vars:
+    github_user: "trid147"
+    bot_token: "{{ env_bot_token }}"
+    proxy_url: "{{ env_proxy_url | default('') }}"
+    proxy_file_url: "{{ env_proxy_file_url | default('') }}"
+
+  tasks:
+    - name: Ensure Podman is installed
+      apt:
+        name: podman
+        state: present
+        update_cache: yes
+    
+    - name: Run Saturn Cryptor Container securely
+      containers.podman.podman_container:
+        name: saturn-cryptor-bot
+        image: "ghcr.io/{{ github_user }}/saturn-cryptor:v1"
+        state: started
+        restart_policy: "no"
+        env:
+          TELEGRAM_BOT_TOKEN: "{{ bot_token }}"
+          TELEGRAM_PROXY_URL: "{{ proxy_url }}"
+          TELEGRAM_PROXY_FILE_URL: "{{ proxy_file_url }}"
+
+    - name: Generate systemd service for reboot survival
+      ansible.builtin.shell:
+        cmd: podman generate systemd --name saturn-cryptor-bot --files --new
+        chdir: /etc/systemd/system/
+      register: systemd_generation
+      failed_when: false
+
+    - name: Reload systemd engine
+      ansible.builtin.systemd:
+        daemon_reload: yes
+
+    - name: Enabled systemd container auto-restart service
+      ansible.builtin.systemd:
+        name: container-saturn-cryptor-bot
+        enabled: yes
+        state: started
